@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 namespace VVVV.Nodes.ValveOpenVR
 {
     [PluginInfo(Name = "TrackedDevices", Category = "OpenVR", Tags = "vr, htc, vive, oculus, rift, controller, gamepad", Author = "tonfilm, herbst")]
-    public class ValveOpenVRTrackedDeviceNode : OpenVRConsumerBaseNode, IPluginEvaluate
+    public class ValveOpenVRTrackedDeviceNode : OpenVRConsumerBaseNode
     {
         [Output("Events")]
         ISpread<String> FEventsOut;

@@ -75,16 +75,37 @@ namespace VVVV.Nodes.ValveOpenVR
             return System;
         }
 
+        private static int _trackedDevicesCount = -1;
+        private static TrackedDevicePose_t[] _renderPoses;
         public static TrackedDevicePose_t[] RenderPoses
         {
-            get;
-            set;
+            get
+            {
+                var count = (int) OpenVR.k_unMaxTrackedDeviceCount;
+                if (_trackedDevicesCount != count || _renderPoses == null)
+                {
+                    _renderPoses = new TrackedDevicePose_t[count];
+                    _trackedDevicesCount = count;
+                }
+                return _renderPoses;
+            }
+            set { _renderPoses = value; }
         }
-
+        
+        private static TrackedDevicePose_t[] _gamePoses;
         public static TrackedDevicePose_t[] GamePoses
         {
-            get;
-            set;
+            get
+            {
+                var count = (int)OpenVR.k_unMaxTrackedDeviceCount;
+                if (_trackedDevicesCount != count || _gamePoses == null)
+                {
+                    _gamePoses = new TrackedDevicePose_t[count];
+                    _trackedDevicesCount = count;
+                }
+                return _gamePoses;
+            }
+            set { _gamePoses = value; }
         }
 
         static void SetStatus(object toString)

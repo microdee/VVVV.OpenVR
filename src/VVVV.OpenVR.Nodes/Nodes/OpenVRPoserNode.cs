@@ -14,9 +14,8 @@ using System.Runtime.InteropServices;
 namespace VVVV.Nodes.ValveOpenVR
 {
     [PluginInfo(Name = "Poser", Category = "OpenVR", Tags = "vr, htc, vive, oculus, rift", Author = "tonfilm")]
-    public class ValveOpenVRInputNode : OpenVRProducerNode, IPluginEvaluate, IDisposable
+    public class ValveOpenVRInputNode : OpenVRConsumerBaseNode
     {
-
         [Output("HMD Pose", IsSingle = true)]
         ISpread<Matrix> FHMDPoseOut;
 
@@ -43,50 +42,39 @@ namespace VVVV.Nodes.ValveOpenVR
 
         public override void Evaluate(int SpreadMax, CVRSystem system)
         {
-            //poses
-            var poseCount = (int)OpenVR.k_unMaxTrackedDeviceCount;
-            var renderPoses = new TrackedDevicePose_t[poseCount];
-            var gamePoses = new TrackedDevicePose_t[poseCount];
-
-            FRemainingTimePre[0] = OpenVR.Compositor.GetFrameTimeRemaining();
-            var error = OpenVR.Compositor.WaitGetPoses(renderPoses, gamePoses);
-            SetStatus(error);
-            if (error != EVRCompositorError.None) return;
-            FRemainingTimePost[0] = OpenVR.Compositor.GetFrameTimeRemaining();
-
-            OpenVRManager.RenderPoses = renderPoses;
-            OpenVRManager.GamePoses = gamePoses;
-
-            FRenderPosesOut.SliceCount = poseCount;
-            FGamePosesOut.SliceCount = poseCount;
-            FDeviceClassOut.SliceCount = poseCount;
-            FLighthousePosesOut.SliceCount = 0;
-            FControllerPosesOut.SliceCount = 0;
-
-            for (int i = 0; i < poseCount; i++)
+            if (FSystemIn.IsConnected)
             {
-                FRenderPosesOut[i] = renderPoses[i].mDeviceToAbsoluteTracking.ToMatrix();
-                FGamePosesOut[i] = gamePoses[i].mDeviceToAbsoluteTracking.ToMatrix();
-                var deviceClass = system.GetTrackedDeviceClass((uint)i);
-                FDeviceClassOut[i] = deviceClass.ToString();
+                //poses
+                var renderPoses = OpenVRManager.RenderPoses;
+                var gamePoses = OpenVRManager.GamePoses;
+                var poseCount = renderPoses.Length;
 
-                if (deviceClass == ETrackedDeviceClass.TrackingReference)
+                FRenderPosesOut.SliceCount = poseCount;
+                FGamePosesOut.SliceCount = poseCount;
+                FDeviceClassOut.SliceCount = poseCount;
+                FLighthousePosesOut.SliceCount = 0;
+                FControllerPosesOut.SliceCount = 0;
+
+                for (int i = 0; i < poseCount; i++)
                 {
-                    FLighthousePosesOut.Add(FGamePosesOut[i]);
+                    FRenderPosesOut[i] = renderPoses[i].mDeviceToAbsoluteTracking.ToMatrix();
+                    FGamePosesOut[i] = gamePoses[i].mDeviceToAbsoluteTracking.ToMatrix();
+                    var deviceClass = system.GetTrackedDeviceClass((uint)i);
+                    FDeviceClassOut[i] = deviceClass.ToString();
+
+                    if (deviceClass == ETrackedDeviceClass.TrackingReference)
+                    {
+                        FLighthousePosesOut.Add(FGamePosesOut[i]);
+                    }
+
+                    if (deviceClass == ETrackedDeviceClass.Controller)
+                    {
+                        FControllerPosesOut.Add(FGamePosesOut[i]);
+                    }
                 }
 
-                if (deviceClass == ETrackedDeviceClass.Controller)
-                {
-                    FControllerPosesOut.Add(FGamePosesOut[i]);
-                }
+                FHMDPoseOut[0] = FRenderPosesOut[0];
             }
-
-            FHMDPoseOut[0] = FRenderPosesOut[0];
-        }
-
-        public void Dispose()
-        {
-            OpenVRManager.ShutDownOpenVR();
         }
     }
 }

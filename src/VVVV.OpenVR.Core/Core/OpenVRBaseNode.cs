@@ -38,15 +38,20 @@ namespace VVVV.Nodes.ValveOpenVR
     public abstract class OpenVRProducerNode : OpenVRBaseNode, IPluginEvaluate
     {
         [Output("System", IsSingle = true, Order = -100)]
-        ISpread<CVRSystem> FSystemOut;
+        protected ISpread<CVRSystem> FSystemOut;
 
         [Input("Init", IsBang = true, IsSingle = true)]
-        ISpread<bool> FInitIn;
+        protected ISpread<bool> FInitIn;
 
         bool FFirstFrame = true;
 
         //the vr system
         private CVRSystem FOpenVRSystem;
+
+        public virtual void OnFirstFrame(int SpreadMax, CVRSystem system)
+        {
+            
+        }
 
         public void Evaluate(int SpreadMax)
         {
@@ -55,6 +60,7 @@ namespace VVVV.Nodes.ValveOpenVR
                 FOpenVRSystem = OpenVRManager.InitOpenVR();
                 SetStatus(OpenVRManager.ErrorMessage);
                 FSystemOut[0] = FOpenVRSystem;
+                OnFirstFrame(SpreadMax, FOpenVRSystem);
             }
 
             if (FOpenVRSystem != null)
@@ -70,7 +76,7 @@ namespace VVVV.Nodes.ValveOpenVR
     {
 
         [Input("System", IsSingle = true, Order = -100)]
-        IDiffSpread<CVRSystem> FSystemIn;
+        protected Pin<CVRSystem> FSystemIn;
 
         //the vr system
         private CVRSystem FOpenVRSystem;
@@ -88,7 +94,7 @@ namespace VVVV.Nodes.ValveOpenVR
             }
             else
             {
-                SetStatus("OpenVR is not initialized, at least one Poser (OpenVR) or Camera (OpenVR) must exist");
+                SetStatus("OpenVR is not initialized, please connect a Producer (OpenVR) node");
             }
         }
     }
